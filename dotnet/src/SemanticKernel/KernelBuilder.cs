@@ -24,6 +24,7 @@ public sealed class KernelBuilder
     private ISemanticTextMemory _memory = NullMemory.Instance;
     private ILogger _log = NullLogger.Instance;
     private IMemoryStore<float>? _memoryStorage = null;
+    private IPromptTemplateEngine? _promptTemplateEngine = null;
     private IDelegatingHandlerFactory? _httpHandlerFactory = null;
 
     /// <summary>
@@ -49,7 +50,7 @@ public sealed class KernelBuilder
 
         var instance = new Kernel(
             new SkillCollection(this._log),
-            new PromptTemplateEngine(this._log),
+            this._promptTemplateEngine ?? new PromptTemplateEngine(this._log),
             this._memory,
             this._config,
             this._log
@@ -112,6 +113,18 @@ public sealed class KernelBuilder
         Verify.NotNull(storage, "The memory instance provided is NULL");
         Verify.NotNull(embeddingGenerator, "The embedding generator instance provided is NULL");
         this._memory = new SemanticTextMemory(storage, embeddingGenerator);
+        return this;
+    }
+
+    /// <summary>
+    /// Add prompt template engine to the kernel to be built.
+    /// </summary>
+    /// <param name="promptTemplateEngine">Prompt template engine to add.</param>
+    /// <returns>Updated kernel builder including the prompt template engine.</returns>
+    public KernelBuilder WithPromptTemplateEngine(IPromptTemplateEngine promptTemplateEngine)
+    {
+        Verify.NotNull(promptTemplateEngine, "The prompt template engine instance provided is NULL");
+        this._promptTemplateEngine = promptTemplateEngine;
         return this;
     }
 

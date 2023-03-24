@@ -61,8 +61,18 @@ public class PromptTemplateEngine : IPromptTemplateEngine
         return await this.RenderAsync(blocks, context);
     }
 
+    protected virtual string RenderStaticBlock(ITextRendering staticBlock, ContextVariables? contextVariables, string blockContent)
+    {
+        return staticBlock.Render(contextVariables);
+    }
+
+    protected virtual Task<string> RenderDynamicBlockAsync(ICodeRendering dynamicBlock, SKContext context, string blockContent)
+    {
+        return dynamicBlock.RenderCodeAsync(context);
+    }
+
     /// <inheritdoc/>
-    public async Task<string> RenderAsync(IList<Block> blocks, SKContext context)
+    public virtual async Task<string> RenderAsync(IList<Block> blocks, SKContext context)
     {
         this._log.LogTrace("Rendering list of {0} blocks", blocks.Count);
         var result = new StringBuilder();
@@ -71,11 +81,11 @@ public class PromptTemplateEngine : IPromptTemplateEngine
             switch (block)
             {
                 case ITextRendering staticBlock:
-                    result.Append(staticBlock.Render(context.Variables));
+                    result.Append(this.RenderStaticBlock(staticBlock, context.Variables, block.Content));
                     break;
 
                 case ICodeRendering dynamicBlock:
-                    result.Append(await dynamicBlock.RenderCodeAsync(context));
+                    result.Append(await this.RenderDynamicBlockAsync(dynamicBlock, context, block.Content));
                     break;
 
                 default:
@@ -96,7 +106,7 @@ public class PromptTemplateEngine : IPromptTemplateEngine
         this._log.LogTrace("Rendering variables");
         return blocks.Select(block => block.Type != BlockTypes.Variable
             ? block
-            : new TextBlock(((ITextRendering)block).Render(variables), this._log)).ToList();
+            : new TextBlock(this.RenderStaticBlock((ITextRendering)block, variables, block.Content), this._log)).ToList();
     }
 
     /// <inheritdoc/>
@@ -114,7 +124,7 @@ public class PromptTemplateEngine : IPromptTemplateEngine
             }
             else
             {
-                var codeResult = await ((ICodeRendering)block).RenderCodeAsync(executionContext);
+                var codeResult = await this.RenderDynamicBlockAsync((ICodeRendering)block, executionContext, block.Content);
                 updatedBlocks.Add(new TextBlock(codeResult, this._log));
             }
         }
