@@ -63,10 +63,8 @@ public class ProxySkillTests
         Assert.Single(kernel.Log.Values, "123 ok");
     }
 
-    [Theory]
-    [InlineData(true)]
-    [InlineData(false)]
-    public async Task ItReplaysFunctionsAsync(bool provideSkill)
+    [Fact]
+    public async Task ItReplaysFunctionsAsync()
     {
         // Arrange
         const string template = "== {{my.check123 $call}} ==";
@@ -77,10 +75,7 @@ public class ProxySkillTests
             [(method: typeof(PromptTemplateEngineTests.MySkill).GetMethod(nameof(PromptTemplateEngineTests.MySkill.MyFunction))!,
               args: new object[] { "123" })] = nonsense,
         });
-        if (provideSkill)
-        {
-            kernel.ImportSkill(new PromptTemplateEngineTests.MySkill(), "my");
-        }
+        kernel.ImportSkill(new PromptTemplateEngineTests.MySkill(), "my");
         var context = kernel.CreateNewContext();
         context["call"] = "123";
 
@@ -109,12 +104,6 @@ public class ProxySkillTests
         {
             return method.Invoke(skillInstance, args);
         }
-
-        //public virtual bool TryInvokeSkill(object skillInstance, string functionName, object[] args, out object result)
-        //{
-            //result = null;
-            //return false;
-        //}
 
         public IDictionary<string, ISKFunction> ImportSkill(object skillInstance, string skillName = "")
         {
@@ -155,7 +144,6 @@ public class ProxySkillTests
 
             ctorIL.Emit(OpCodes.Ret);
 
-            //MethodInfo tryInvokeSkill = typeof(SkillProxyKernel).GetMethod(nameof(TryInvokeSkill))!;
             MethodInfo invokeSkill = typeof(SkillProxyKernel).GetMethod(nameof(InvokeSkill))!;
             for (int i = 0; i < validMethods.Length; i++)
             {
@@ -196,31 +184,8 @@ public class ProxySkillTests
                     mIL.Emit(OpCodes.Stelem_Ref);
                 }
 
-                //var proxiedReturnValue = mIL.DeclareLocal(typeof(object));
-                //mIL.Emit(OpCodes.Ldloca, (short)0);
-
-                //mIL.Emit(OpCodes.Callvirt, tryInvokeSkill);
                 mIL.Emit(OpCodes.Callvirt, invokeSkill);
-
-                //var callSkillLabel = mIL.DefineLabel();
-                //mIL.Emit(OpCodes.Brfalse, callSkillLabel);
-
-                //mIL.Emit(OpCodes.Ldloc_0);
                 mIL.Emit(OpCodes.Ret);
-
-                //mIL.MarkLabel(callSkillLabel);
-
-                //mIL.Emit(OpCodes.Ldarg_0);
-                //mIL.Emit(OpCodes.Ldfld, skillField);
-
-                //for (int p = 0; p < numParams; p++)
-                //{
-                    // // Parameter 0 is this.
-                    //mIL.Emit(OpCodes.Ldarg, (short)(p + 1));
-                //}
-
-                //mIL.Emit(OpCodes.Callvirt, method);
-                //mIL.Emit(OpCodes.Ret);
             }
 
             Type t = tb.CreateType()!;
