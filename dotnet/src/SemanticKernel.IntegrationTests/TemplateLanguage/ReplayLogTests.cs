@@ -162,11 +162,15 @@ public class ReplayLogTests
             var loggedIOPairs = logEntry.ToDictionary(t => t.context, t => t.result);
 #pragma warning disable CA2000 // Dispose objects before losing scope
             kernel.RegisterCustomFunction(logEntry.Key.skillName, new SKFunction(
-                SKFunction.DelegateTypes.InSKContextOutTaskString,
-                (Func<SKContext, Task<string>>)(async (context) =>
+                SKFunction.DelegateTypes.ContextSwitchInSKContextOutTaskSKContext,
+                (Func<SKContext, Task<SKContext>>)(async (context) =>
                 {
-                    if (loggedIOPairs.TryGetValue(context.Variables.Input, out string? result)) { return result; }
-                    return (await fallback.InvokeAsync(context)).Result;
+                    if (loggedIOPairs.TryGetValue(context.Variables.Input, out string? result))
+                    {
+                        context.Variables.Update(result);
+                        return context;
+                    }
+                    return await fallback.InvokeAsync(context);
                 }),
                 (fallback as SKFunction)?.Parameters ?? Array.Empty<ParameterView>(),
                 logEntry.Key.skillName,
