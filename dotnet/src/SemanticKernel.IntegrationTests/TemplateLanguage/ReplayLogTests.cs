@@ -153,8 +153,6 @@ public class ReplayLogTests
         }
     }
 
-    private delegate Task<string?> MyFunc(string context);
-
     private static void LoadReplay(IKernel kernel, IReadOnlyDictionary<(string skillName, string functionName, string context), string> log)
     {
         foreach (var logEntry in log.GroupBy(kvp => (kvp.Key.skillName, kvp.Key.functionName), kvp => (kvp.Key.context, result: kvp.Value)))
