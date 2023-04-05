@@ -189,10 +189,10 @@ public sealed class SKFunction : ISKFunction, IDisposable
         }
 
         EventId eventId = default;
-        if (log != null) {
+        if (log != null)
+        {
             // Generate a unique EventId to correlate this with the result log.
             eventId = new EventId(this.GetHashCode() ^ context.GetHashCode(), $"Invoke {this.SkillName}.{this.Name}");
-            // TODO Proper string formatting of function name and context?
             log.LogTrace(eventId, "Invoking SKFunction {0}.{1} with context {2}", this.SkillName, this.Name, context);
         }
 
