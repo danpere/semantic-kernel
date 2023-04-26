@@ -43,6 +43,8 @@ public sealed class Kernel : IKernel, IDisposable
     /// <inheritdoc/>
     public ISemanticTextMemory Memory => this._memory;
 
+    public ChatHistory? ChatHistory { get; set; }
+
     /// <inheritdoc/>
     public IReadOnlySkillCollection Skills => this._skillCollection.ReadOnlySkillCollection;
 
@@ -166,6 +168,7 @@ public sealed class Kernel : IKernel, IDisposable
             this._skillCollection.ReadOnlySkillCollection,
             this._log,
             cancellationToken);
+        context.ChatHistory = this.ChatHistory ??= this.GetService<IChatCompletion>().CreateNewChat();
 
         int pipelineStepCount = -1;
         foreach (ISKFunction f in pipeline)
