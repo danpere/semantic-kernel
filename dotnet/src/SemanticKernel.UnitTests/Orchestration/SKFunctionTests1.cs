@@ -1,7 +1,7 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 
 using System.Collections.Generic;
-using Microsoft.SemanticKernel.AI.TextCompletion;
+using Microsoft.SemanticKernel.AI.ChatCompletion;
 using Microsoft.SemanticKernel.Orchestration;
 using Microsoft.SemanticKernel.SemanticFunctions;
 using Microsoft.SemanticKernel.SkillDefinition;
@@ -43,7 +43,7 @@ public sealed class SKFunctionTests1
         var templateConfig = new PromptTemplateConfig();
         var functionConfig = new SemanticFunctionConfig(templateConfig, this._promptTemplate.Object);
         var skFunction = SKFunction.FromSemanticConfig("sk", "name", functionConfig);
-        var settings = new CompleteRequestSettings
+        var settings = new ChatRequestSettings
         {
             Temperature = 0.9,
             MaxTokens = 2001,

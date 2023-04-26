@@ -3,6 +3,7 @@
 using System;
 using System.Threading;
 using Microsoft.Extensions.Logging;
+using Microsoft.SemanticKernel.AI.ChatCompletion;
 using Microsoft.SemanticKernel.Diagnostics;
 using Microsoft.SemanticKernel.Memory;
 using Microsoft.SemanticKernel.SkillDefinition;
@@ -79,6 +80,11 @@ public sealed class SKContext
     /// Semantic memory
     /// </summary>
     public ISemanticTextMemory Memory { get; }
+
+    /// <summary>
+    /// Chat history. Setter is public so history can be modified arbitrarily.
+    /// </summary>
+    public ChatHistory ChatHistory { get; set; }
 
     /// <summary>
     /// Read only skills collection

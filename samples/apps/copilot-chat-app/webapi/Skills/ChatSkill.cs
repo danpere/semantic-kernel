@@ -2,6 +2,7 @@
 
 using System.Globalization;
 using Microsoft.SemanticKernel;
+using Microsoft.SemanticKernel.AI.ChatCompletion;
 using Microsoft.SemanticKernel.AI.TextCompletion;
 using Microsoft.SemanticKernel.Memory;
 using Microsoft.SemanticKernel.Orchestration;
@@ -393,9 +394,9 @@ public class ChatSkill
     /// <summary>
     /// Create a completion settings object for chat response. Parameters are read from the PromptSettings class.
     /// </summary>
-    private CompleteRequestSettings CreateChatResponseCompletionSettings()
+    private ChatRequestSettings CreateChatResponseCompletionSettings()
     {
-        var completionSettings = new CompleteRequestSettings
+        var completionSettings = new ChatRequestSettings
         {
             MaxTokens = this._promptSettings.ResponseTokenLimit,
             Temperature = this._promptSettings.ResponseTemperature,
@@ -410,9 +411,9 @@ public class ChatSkill
     /// <summary>
     /// Create a completion settings object for intent response. Parameters are read from the PromptSettings class.
     /// </summary>
-    private CompleteRequestSettings CreateIntentCompletionSettings()
+    private ChatRequestSettings CreateIntentCompletionSettings()
     {
-        var completionSettings = new CompleteRequestSettings
+        var completionSettings = new ChatRequestSettings
         {
             MaxTokens = this._promptSettings.ResponseTokenLimit,
             Temperature = this._promptSettings.IntentTemperature,

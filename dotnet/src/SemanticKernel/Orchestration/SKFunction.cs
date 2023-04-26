@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.SemanticKernel.AI;
-using Microsoft.SemanticKernel.AI.TextCompletion;
+using Microsoft.SemanticKernel.AI.ChatCompletion;
 using Microsoft.SemanticKernel.Diagnostics;
 using Microsoft.SemanticKernel.Memory;
 using Microsoft.SemanticKernel.SemanticFunctions;
@@ -38,7 +38,7 @@ public sealed class SKFunction : ISKFunction, IDisposable
     public bool IsSemantic { get; }
 
     /// <inheritdoc/>
-    public CompleteRequestSettings RequestSettings
+    public ChatRequestSettings RequestSettings
     {
         get { return this._aiRequestSettings; }
     }
@@ -100,8 +100,8 @@ public sealed class SKFunction : ISKFunction, IDisposable
         Verify.NotNull(functionConfig, "Function configuration is empty");
 
         async Task<SKContext> LocalFunc(
-            ITextCompletion client,
-            CompleteRequestSettings requestSettings,
+            IChatCompletion client,
+            ChatRequestSettings requestSettings,
             SKContext context)
         {
             Verify.NotNull(client, "AI LLM backed is empty");
@@ -110,8 +110,10 @@ public sealed class SKFunction : ISKFunction, IDisposable
             {
                 string prompt = await functionConfig.PromptTemplate.RenderAsync(context).ConfigureAwait(false);
 
-                string completion = await client.CompleteAsync(prompt, requestSettings, context.CancellationToken).ConfigureAwait(false);
+                context.ChatHistory.AddMessage(ChatHistory.AuthorRoles.User, prompt);
+                string completion = await client.GenerateMessageAsync(context.ChatHistory, requestSettings, context.CancellationToken).ConfigureAwait(false);
                 context.Variables.Update(completion);
+                context.ChatHistory.AddMessage(ChatHistory.AuthorRoles.Assistant, completion);
             }
             catch (AIException ex)
             {
@@ -157,7 +159,7 @@ public sealed class SKFunction : ISKFunction, IDisposable
     public Task<SKContext> InvokeAsync(
         string input,
         SKContext? context = null,
-        CompleteRequestSettings? settings = null,
+        ChatRequestSettings? settings = null,
         ILogger? log = null,
         CancellationToken? cancel = null)
     {
@@ -181,7 +183,7 @@ public sealed class SKFunction : ISKFunction, IDisposable
     /// <inheritdoc/>
     public Task<SKContext> InvokeAsync(
         SKContext? context = null,
-        CompleteRequestSettings? settings = null,
+        ChatRequestSettings? settings = null,
         ILogger? log = null,
         CancellationToken? cancel = null)
     {
@@ -205,7 +207,7 @@ public sealed class SKFunction : ISKFunction, IDisposable
     }
 
     /// <inheritdoc/>
-    public ISKFunction SetAIService(Func<ITextCompletion> serviceFactory)
+    public ISKFunction SetAIService(Func<IChatCompletion> serviceFactory)
     {
         Verify.NotNull(serviceFactory, "AI LLM service factory is empty");
         this.VerifyIsSemantic();
@@ -214,7 +216,7 @@ public sealed class SKFunction : ISKFunction, IDisposable
     }
 
     /// <inheritdoc/>
-    public ISKFunction SetAIConfiguration(CompleteRequestSettings settings)
+    public ISKFunction SetAIConfiguration(ChatRequestSettings settings)
     {
         Verify.NotNull(settings, "AI LLM request settings are empty");
         this.VerifyIsSemantic();
@@ -245,8 +247,8 @@ public sealed class SKFunction : ISKFunction, IDisposable
     private readonly Delegate _function;
     private readonly ILogger _log;
     private IReadOnlySkillCollection? _skillCollection;
-    private ITextCompletion? _aiService = null;
-    private CompleteRequestSettings _aiRequestSettings = new();
+    private IChatCompletion? _aiService = null;
+    private ChatRequestSettings _aiRequestSettings = new();
 
     private struct MethodDetails
     {
@@ -331,7 +333,7 @@ public sealed class SKFunction : ISKFunction, IDisposable
     }
 
     // Run the semantic function
-    private async Task<SKContext> InvokeSemanticAsync(SKContext context, CompleteRequestSettings? settings)
+    private async Task<SKContext> InvokeSemanticAsync(SKContext context, ChatRequestSettings? settings)
     {
         this.VerifyIsSemantic();
 
@@ -339,7 +341,7 @@ public sealed class SKFunction : ISKFunction, IDisposable
 
         settings ??= this._aiRequestSettings;
 
-        var callable = (Func<ITextCompletion?, CompleteRequestSettings?, SKContext, Task<SKContext>>)this._function;
+        var callable = (Func<IChatCompletion?, ChatRequestSettings?, SKContext, Task<SKContext>>)this._function;
         context.Variables.Update((await callable(this._aiService, settings, context).ConfigureAwait(false)).Variables);
         return context;
     }

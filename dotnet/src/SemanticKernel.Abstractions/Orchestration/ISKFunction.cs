@@ -4,7 +4,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
-using Microsoft.SemanticKernel.AI.TextCompletion;
+using Microsoft.SemanticKernel.AI.ChatCompletion;
 using Microsoft.SemanticKernel.SkillDefinition;
 
 namespace Microsoft.SemanticKernel.Orchestration;
@@ -39,7 +39,7 @@ public interface ISKFunction
     /// <summary>
     /// AI service settings
     /// </summary>
-    CompleteRequestSettings RequestSettings { get; }
+    ChatRequestSettings RequestSettings { get; }
 
     /// <summary>
     /// Returns a description of the function, including parameters.
@@ -59,7 +59,7 @@ public interface ISKFunction
     Task<SKContext> InvokeAsync(
         string input,
         SKContext? context = null,
-        CompleteRequestSettings? settings = null,
+        ChatRequestSettings? settings = null,
         ILogger? log = null,
         CancellationToken? cancel = null);
 
@@ -73,7 +73,7 @@ public interface ISKFunction
     /// <returns>The updated context, potentially a new one if context switching is implemented.</returns>
     Task<SKContext> InvokeAsync(
         SKContext? context = null,
-        CompleteRequestSettings? settings = null,
+        ChatRequestSettings? settings = null,
         ILogger? log = null,
         CancellationToken? cancel = null);
 
@@ -91,12 +91,12 @@ public interface ISKFunction
     /// </summary>
     /// <param name="serviceFactory">AI service factory</param>
     /// <returns>Self instance</returns>
-    ISKFunction SetAIService(Func<ITextCompletion> serviceFactory);
+    ISKFunction SetAIService(Func<IChatCompletion> serviceFactory);
 
     /// <summary>
     /// Set the AI completion settings used with LLM requests
     /// </summary>
     /// <param name="settings">LLM completion settings</param>
     /// <returns>Self instance</returns>
-    ISKFunction SetAIConfiguration(CompleteRequestSettings settings);
+    ISKFunction SetAIConfiguration(ChatRequestSettings settings);
 }

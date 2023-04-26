@@ -10,7 +10,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
-using Microsoft.SemanticKernel.AI.TextCompletion;
+using Microsoft.SemanticKernel.AI.ChatCompletion;
 using Microsoft.SemanticKernel.Diagnostics;
 using Microsoft.SemanticKernel.SkillDefinition;
 
@@ -81,7 +81,7 @@ public sealed class Plan : ISKFunction
 
     /// <inheritdoc/>
     [JsonIgnore]
-    public CompleteRequestSettings RequestSettings { get; private set; } = new();
+    public ChatRequestSettings RequestSettings { get; private set; } = new();
 
     #endregion ISKFunction implementation
 
@@ -282,7 +282,7 @@ public sealed class Plan : ISKFunction
     }
 
     /// <inheritdoc/>
-    public Task<SKContext> InvokeAsync(string input, SKContext? context = null, CompleteRequestSettings? settings = null, ILogger? log = null,
+    public Task<SKContext> InvokeAsync(string input, SKContext? context = null, ChatRequestSettings? settings = null, ILogger? log = null,
         CancellationToken? cancel = null)
     {
         context ??= new SKContext(new ContextVariables(input), null!, null, log ?? NullLogger.Instance, cancel ?? CancellationToken.None);
@@ -290,7 +290,7 @@ public sealed class Plan : ISKFunction
     }
 
     /// <inheritdoc/>
-    public async Task<SKContext> InvokeAsync(SKContext? context = null, CompleteRequestSettings? settings = null, ILogger? log = null,
+    public async Task<SKContext> InvokeAsync(SKContext? context = null, ChatRequestSettings? settings = null, ILogger? log = null,
         CancellationToken? cancel = null)
     {
         context ??= new SKContext(this.State, null!, null, log ?? NullLogger.Instance, cancel ?? CancellationToken.None);
@@ -336,7 +336,7 @@ public sealed class Plan : ISKFunction
     }
 
     /// <inheritdoc/>
-    public ISKFunction SetAIService(Func<ITextCompletion> serviceFactory)
+    public ISKFunction SetAIService(Func<IChatCompletion> serviceFactory)
     {
         return this.Function is null
             ? throw new NotImplementedException()
@@ -344,7 +344,7 @@ public sealed class Plan : ISKFunction
     }
 
     /// <inheritdoc/>
-    public ISKFunction SetAIConfiguration(CompleteRequestSettings settings)
+    public ISKFunction SetAIConfiguration(ChatRequestSettings settings)
     {
         return this.Function is null
             ? throw new NotImplementedException()

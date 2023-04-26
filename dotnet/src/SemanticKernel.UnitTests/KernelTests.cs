@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.SemanticKernel;
-using Microsoft.SemanticKernel.AI.TextCompletion;
+using Microsoft.SemanticKernel.AI.ChatCompletion;
 using Microsoft.SemanticKernel.Orchestration;
 using Microsoft.SemanticKernel.SkillDefinition;
 using Moq;
@@ -22,8 +22,8 @@ public class KernelTests
     {
         // Arrange
         var kernel = KernelBuilder.Create();
-        var factory = new Mock<Func<IKernel, ITextCompletion>>();
-        kernel.Config.AddTextCompletionService("x", factory.Object);
+        var factory = new Mock<Func<IKernel, IChatCompletion>>();
+        kernel.Config.AddChatCompletionService("x", factory.Object);
 
         var nativeSkill = new MySkill();
         kernel.CreateSemanticFunction(promptTemplate: "Tell me a joke", functionName: "joker", skillName: "jk", description: "Nice fun");
@@ -50,8 +50,8 @@ public class KernelTests
     {
         // Arrange
         var kernel = KernelBuilder.Create();
-        var factory = new Mock<Func<IKernel, ITextCompletion>>();
-        kernel.Config.AddTextCompletionService("x", factory.Object);
+        var factory = new Mock<Func<IKernel, IChatCompletion>>();
+        kernel.Config.AddChatCompletionService("x", factory.Object);
 
         var nativeSkill = new MySkill();
         kernel.CreateSemanticFunction("Tell me a joke", functionName: "joker", skillName: "jk", description: "Nice fun");

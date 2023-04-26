@@ -6,7 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Microsoft.SemanticKernel;
-using Microsoft.SemanticKernel.AI.TextCompletion;
+using Microsoft.SemanticKernel.AI.ChatCompletion;
 using Microsoft.SemanticKernel.Memory;
 using Microsoft.SemanticKernel.Orchestration;
 using Microsoft.SemanticKernel.Planning.Planners;
@@ -46,8 +46,8 @@ public sealed class PlanningTests
             functionsView.AddFunction(functionView);
 
             mockFunction.Setup(x =>
-                    x.InvokeAsync(It.IsAny<SKContext>(), It.IsAny<CompleteRequestSettings>(), It.IsAny<ILogger>(), It.IsAny<CancellationToken>()))
-                .Returns<SKContext, CompleteRequestSettings, ILogger, CancellationToken>((context, settings, log, cancel) =>
+                    x.InvokeAsync(It.IsAny<SKContext>(), It.IsAny<ChatRequestSettings>(), It.IsAny<ILogger>(), It.IsAny<CancellationToken>()))
+                .Returns<SKContext, ChatRequestSettings, ILogger, CancellationToken>((context, settings, log, cancel) =>
                 {
                     context.Variables.Update("MOCK FUNCTION CALLED");
                     return Task.FromResult(context);
@@ -102,7 +102,7 @@ public sealed class PlanningTests
             null,
             null,
             null
-        )).Callback<SKContext, CompleteRequestSettings, ILogger, CancellationToken?>(
+        )).Callback<SKContext, ChatRequestSettings, ILogger, CancellationToken?>(
             (c, s, l, ct) => c.Variables.Update("Hello world!")
         ).Returns(() => Task.FromResult(returnContext));
 

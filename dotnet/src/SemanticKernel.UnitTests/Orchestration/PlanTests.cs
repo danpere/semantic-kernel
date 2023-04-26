@@ -6,7 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Microsoft.SemanticKernel;
-using Microsoft.SemanticKernel.AI.TextCompletion;
+using Microsoft.SemanticKernel.AI.ChatCompletion;
 using Microsoft.SemanticKernel.Memory;
 using Microsoft.SemanticKernel.Orchestration;
 using Microsoft.SemanticKernel.SkillDefinition;
@@ -70,7 +70,7 @@ public sealed class PlanTests
 
         var mockFunction = new Mock<ISKFunction>();
         mockFunction.Setup(x => x.InvokeAsync(It.IsAny<SKContext>(), null, null, null))
-            .Callback<SKContext, CompleteRequestSettings, ILogger, CancellationToken?>((c, s, l, ct) =>
+            .Callback<SKContext, ChatRequestSettings, ILogger, CancellationToken?>((c, s, l, ct) =>
                 returnContext.Variables.Update(returnContext.Variables.Input + c.Variables.Input))
             .Returns(() => Task.FromResult(returnContext));
 
@@ -109,7 +109,7 @@ public sealed class PlanTests
 
         var mockFunction = new Mock<ISKFunction>();
         mockFunction.Setup(x => x.InvokeAsync(It.IsAny<SKContext>(), null, null, null))
-            .Callback<SKContext, CompleteRequestSettings, ILogger, CancellationToken?>((c, s, l, ct) =>
+            .Callback<SKContext, ChatRequestSettings, ILogger, CancellationToken?>((c, s, l, ct) =>
                 returnContext.Variables.Update(returnContext.Variables.Input + c.Variables.Input))
             .Returns(() => Task.FromResult(returnContext));
 
@@ -148,7 +148,7 @@ public sealed class PlanTests
 
         var mockFunction = new Mock<ISKFunction>();
         mockFunction.Setup(x => x.InvokeAsync(It.IsAny<SKContext>(), null, null, null))
-            .Callback<SKContext, CompleteRequestSettings, ILogger, CancellationToken?>((c, s, l, ct) =>
+            .Callback<SKContext, ChatRequestSettings, ILogger, CancellationToken?>((c, s, l, ct) =>
                 returnContext.Variables.Update(returnContext.Variables.Input + c.Variables.Input))
             .Returns(() => Task.FromResult(returnContext));
 
@@ -187,7 +187,7 @@ public sealed class PlanTests
 
         var mockFunction = new Mock<ISKFunction>();
         mockFunction.Setup(x => x.InvokeAsync(It.IsAny<SKContext>(), null, null, null))
-            .Callback<SKContext, CompleteRequestSettings, ILogger, CancellationToken?>((c, s, l, ct) =>
+            .Callback<SKContext, ChatRequestSettings, ILogger, CancellationToken?>((c, s, l, ct) =>
                 returnContext.Variables.Update(returnContext.Variables.Input + c.Variables.Input))
             .Returns(() => Task.FromResult(returnContext));
 
@@ -226,7 +226,7 @@ public sealed class PlanTests
 
         var mockFunction = new Mock<ISKFunction>();
         mockFunction.Setup(x => x.InvokeAsync(It.IsAny<SKContext>(), null, null, null))
-            .Callback<SKContext, CompleteRequestSettings, ILogger, CancellationToken?>((c, s, l, ct) =>
+            .Callback<SKContext, ChatRequestSettings, ILogger, CancellationToken?>((c, s, l, ct) =>
                 returnContext.Variables.Update(returnContext.Variables.Input + c.Variables.Input))
             .Returns(() => Task.FromResult(returnContext));
 
@@ -265,7 +265,7 @@ public sealed class PlanTests
 
         var mockFunction = new Mock<ISKFunction>();
         mockFunction.Setup(x => x.InvokeAsync(It.IsAny<SKContext>(), null, null, null))
-            .Callback<SKContext, CompleteRequestSettings, ILogger, CancellationToken?>((c, s, l, ct) =>
+            .Callback<SKContext, ChatRequestSettings, ILogger, CancellationToken?>((c, s, l, ct) =>
                 returnContext.Variables.Update(returnContext.Variables.Input + c.Variables.Input))
             .Returns(() => Task.FromResult(returnContext));
 
@@ -311,7 +311,7 @@ public sealed class PlanTests
 
         var mockFunction = new Mock<ISKFunction>();
         mockFunction.Setup(x => x.InvokeAsync(It.IsAny<SKContext>(), null, null, null))
-            .Callback<SKContext, CompleteRequestSettings, ILogger, CancellationToken?>((c, s, l, ct) =>
+            .Callback<SKContext, ChatRequestSettings, ILogger, CancellationToken?>((c, s, l, ct) =>
             {
                 c.Variables.Get("variables", out var v);
                 returnContext.Variables.Update(returnContext.Variables.Input + c.Variables.Input + v);
@@ -442,23 +442,23 @@ public sealed class PlanTests
 
         var childFunction1 = new Mock<ISKFunction>();
         childFunction1.Setup(x => x.InvokeAsync(It.IsAny<SKContext>(), null, null, null))
-            .Callback<SKContext, CompleteRequestSettings, ILogger, CancellationToken?>((c, s, l, ct) =>
+            .Callback<SKContext, ChatRequestSettings, ILogger, CancellationToken?>((c, s, l, ct) =>
                 returnContext.Variables.Update("Child 1 output!" + c.Variables.Input))
             .Returns(() => Task.FromResult(returnContext));
         var childFunction2 = new Mock<ISKFunction>();
         childFunction2.Setup(x => x.InvokeAsync(It.IsAny<SKContext>(), null, null, null))
-            .Callback<SKContext, CompleteRequestSettings, ILogger, CancellationToken?>((c, s, l, ct) =>
+            .Callback<SKContext, ChatRequestSettings, ILogger, CancellationToken?>((c, s, l, ct) =>
                 returnContext.Variables.Update("Child 2 is happy about " + c.Variables.Input))
             .Returns(() => Task.FromResult(returnContext));
         var childFunction3 = new Mock<ISKFunction>();
         childFunction3.Setup(x => x.InvokeAsync(It.IsAny<SKContext>(), null, null, null))
-            .Callback<SKContext, CompleteRequestSettings, ILogger, CancellationToken?>((c, s, l, ct) =>
+            .Callback<SKContext, ChatRequestSettings, ILogger, CancellationToken?>((c, s, l, ct) =>
                 returnContext.Variables.Update("Child 3 heard " + c.Variables.Input))
             .Returns(() => Task.FromResult(returnContext));
 
         var nodeFunction1 = new Mock<ISKFunction>();
         nodeFunction1.Setup(x => x.InvokeAsync(It.IsAny<SKContext>(), null, null, null))
-            .Callback<SKContext, CompleteRequestSettings, ILogger, CancellationToken?>((c, s, l, ct) =>
+            .Callback<SKContext, ChatRequestSettings, ILogger, CancellationToken?>((c, s, l, ct) =>
                 returnContext.Variables.Update(c.Variables.Input + " - this just happened."))
             .Returns(() => Task.FromResult(returnContext));
 
@@ -525,7 +525,7 @@ public sealed class PlanTests
 
         var mockFunction = new Mock<ISKFunction>();
         mockFunction.Setup(x => x.InvokeAsync(It.IsAny<SKContext>(), null, null, null))
-            .Callback<SKContext, CompleteRequestSettings, ILogger, CancellationToken?>((c, s, l, ct) =>
+            .Callback<SKContext, ChatRequestSettings, ILogger, CancellationToken?>((c, s, l, ct) =>
                 returnContext.Variables.Update("Here is a poem about " + c.Variables.Input))
             .Returns(() => Task.FromResult(returnContext));
 

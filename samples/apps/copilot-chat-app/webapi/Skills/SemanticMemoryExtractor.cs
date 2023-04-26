@@ -2,7 +2,7 @@
 
 using System.Globalization;
 using Microsoft.SemanticKernel;
-using Microsoft.SemanticKernel.AI.TextCompletion;
+using Microsoft.SemanticKernel.AI.ChatCompletion;
 using Microsoft.SemanticKernel.Orchestration;
 
 namespace SemanticKernel.Service.Skills;
@@ -51,9 +51,9 @@ internal static class SemanticMemoryExtractor
     /// <summary>
     /// Create a completion settings object for chat response. Parameters are read from the PromptSettings class.
     /// </summary>
-    private static CompleteRequestSettings CreateMemoryExtractionSettings(PromptSettings promptSettings)
+    private static ChatRequestSettings CreateMemoryExtractionSettings(PromptSettings promptSettings)
     {
-        var completionSettings = new CompleteRequestSettings
+        var completionSettings = new ChatRequestSettings
         {
             MaxTokens = promptSettings.ResponseTokenLimit,
             Temperature = promptSettings.ResponseTemperature,

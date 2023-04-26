@@ -4,7 +4,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
-using Microsoft.SemanticKernel.AI.TextCompletion;
+using Microsoft.SemanticKernel.AI.ChatCompletion;
 using Microsoft.SemanticKernel.Memory;
 using Microsoft.SemanticKernel.SkillDefinition;
 
@@ -21,7 +21,7 @@ public static class SKFunctionExtensions
     /// <param name="skFunction">Semantic function</param>
     /// <param name="settings">Completion settings</param>
     /// <returns>Self instance</returns>
-    public static ISKFunction UseCompletionSettings(this ISKFunction skFunction, CompleteRequestSettings settings)
+    public static ISKFunction UseCompletionSettings(this ISKFunction skFunction, ChatRequestSettings settings)
     {
         return skFunction.SetAIConfiguration(settings);
     }

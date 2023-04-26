@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections.Generic;
+using Microsoft.SemanticKernel.SemanticFunctions;
 
 namespace Microsoft.SemanticKernel.AI.ChatCompletion;
 
@@ -46,4 +47,22 @@ public class ChatRequestSettings
     /// The maximum number of tokens to generate in the completion.
     /// </summary>
     public int MaxTokens { get; set; } = 256;
+
+    /// <summary>
+    /// Create a new settings object with the values from another settings object.
+    /// </summary>
+    /// <param name="config"></param>
+    /// <returns>An instance of <see cref="ChatRequestSettings"/> </returns>
+    public static ChatRequestSettings FromCompletionConfig(PromptTemplateConfig.CompletionConfig config)
+    {
+        return new ChatRequestSettings
+        {
+            Temperature = config.Temperature,
+            TopP = config.TopP,
+            PresencePenalty = config.PresencePenalty,
+            FrequencyPenalty = config.FrequencyPenalty,
+            MaxTokens = config.MaxTokens,
+            StopSequences = config.StopSequences,
+        };
+    }
 }
