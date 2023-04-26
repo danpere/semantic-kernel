@@ -204,6 +204,8 @@ public sealed class Kernel : IKernel, IDisposable
             }
         }
 
+        // If the history was replaced, keep the changes.
+        this.ChatHistory = context.ChatHistory;
         return context;
     }
 
