@@ -171,7 +171,7 @@ public sealed class SKFunction : ISKFunction, IDisposable
     }
 
     /// <inheritdoc/>
-    public async Task<SKContext> InvokeAsync(
+    public Task<SKContext> InvokeAsync(
         SKContext? context = null,
         CompleteRequestSettings? settings = null,
         ILogger? log = null,
@@ -183,26 +183,10 @@ public sealed class SKFunction : ISKFunction, IDisposable
             log ??= NullLogger.Instance;
             context = new SKContext(new ContextVariables(""), NullMemory.Instance, null, log, cToken);
         }
-        else
-        {
-            log ??= context.Log;
-        }
 
-        EventId eventId = default;
-        if (log != null)
-        {
-            // Generate a unique EventId to correlate this with the result log.
-            eventId = new EventId(this.GetHashCode() ^ context.GetHashCode(), $"Invoke {this.SkillName}.{this.Name}");
-            log.LogTrace(eventId, "Invoking SKFunction {0}.{1} with context {2}", this.SkillName, this.Name, context);
-        }
-
-        var result = await (this.IsSemantic
+        return this.IsSemantic
             ? this.InvokeSemanticAsync(context, settings)
-            : this.InvokeNativeAsync(context));
-
-        log?.LogTrace(eventId, "Result: {0}", result);
-
-        return result;
+            : this.InvokeNativeAsync(context);
     }
 
     /// <inheritdoc/>

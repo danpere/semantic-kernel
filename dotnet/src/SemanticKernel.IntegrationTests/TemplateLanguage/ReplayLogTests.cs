@@ -3,17 +3,15 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using Microsoft.Extensions.Logging;
 using Microsoft.SemanticKernel;
-using Microsoft.SemanticKernel.Orchestration;
-using Microsoft.SemanticKernel.SkillDefinition;
 using Xunit;
 
 namespace SemanticKernel.IntegrationTests.TemplateLanguage;
 public class ReplayLogTests
 {
+    private const string Key = "key";
+
     [Fact]
     public async Task ItDoesNotLogVariablesAsync()
     {
@@ -22,9 +20,11 @@ public class ReplayLogTests
         const string winner = "SK";
         const string template = "And the winner\n of {{$input}} \nis: {{  $winner }}!";
 
-        var logger = new FunctionLogger();
-        var kernel = Kernel.Builder.WithLogger(logger).Build();
+        var logger = new CollectSkillInvocations(Key);
+        var kernel = Kernel.Builder.Build();
+        logger.AttachTo(kernel);
         var context = kernel.CreateNewContext();
+        context[Key] = Key; // only one call, doesn't matter what the key value is.
         context["input"] = input;
         context["winner"] = winner;
 
@@ -36,8 +36,7 @@ public class ReplayLogTests
             .Replace("{{$input}}", input, StringComparison.OrdinalIgnoreCase)
             .Replace("{{  $winner }}", winner, StringComparison.OrdinalIgnoreCase);
         Assert.Equal(expected, result);
-        Assert.Empty(logger.openCalls);
-        Assert.Empty(logger.log);
+        Assert.Empty(logger.Log);
     }
 
     [Fact]
@@ -45,10 +44,12 @@ public class ReplayLogTests
     {
         // Arrange
         const string template = "== {{my.check123 $call}} ==";
-        var logger = new FunctionLogger();
-        var kernel = Kernel.Builder.WithLogger(logger).Build();
+        var logger = new CollectSkillInvocations(Key);
+        var kernel = Kernel.Builder.Build();
         kernel.ImportSkill(new PromptTemplateEngineTests.MySkill(), "my");
+        logger.AttachTo(kernel);
         var context = kernel.CreateNewContext();
+        context[Key] = Key; // only one call, doesn't matter what the key value is.
         context["call"] = "123";
 
         // Act
@@ -56,7 +57,7 @@ public class ReplayLogTests
 
         // Assert
         Assert.Equal("== 123 ok ==", result);
-        Assert.Single(logger.log.Values, "123 ok");
+        Assert.Single(logger.Log.Values.SelectMany(l => l.Select(e => e.Output)), "123 ok");
     }
 
     [Fact]
@@ -73,6 +74,7 @@ public class ReplayLogTests
             [(skillName: "my", functionName: "check123", context: "123")] = nonsense,
         });
         var context = kernel.CreateNewContext();
+        context[Key] = Key; // only one call, doesn't matter what the key value is.
         context["call"] = "123";
 
         // Act
@@ -96,6 +98,7 @@ public class ReplayLogTests
             [(skillName: "my", functionName: "check123", context: "321")] = nonsense,
         });
         var context = kernel.CreateNewContext();
+        context[Key] = Key; // only one call, doesn't matter what the key value is.
         context["call"] = "123";
 
         // Act
@@ -105,79 +108,12 @@ public class ReplayLogTests
         Assert.Equal("== 123 ok ==", result);
     }
 
-    internal class FunctionLogger : ILogger
-    {
-        private readonly object _locker = new object();
-        public readonly Dictionary<EventId, (string skillName, string functionName, string context)> openCalls = new();
-        public readonly Dictionary<(string skillName, string functionName, string context), string> log = new();
-
-        public IDisposable? BeginScope<TState>(TState state) where TState : notnull
-        {
-            return null;
-        }
-
-        public bool IsEnabled(LogLevel logLevel)
-        {
-            return logLevel == LogLevel.Trace;
-        }
-
-        public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter)
-        {
-            if (logLevel != LogLevel.Trace) { return; }
-            if (eventId.Name == null || !eventId.Name.StartsWith("Invoke ", StringComparison.Ordinal)) { return; }
-
-            string message = formatter(state, exception);
-            if (message.StartsWith("Invoking SKFunction ", StringComparison.Ordinal))
-            {
-                // Parse out function name and context.
-                var match = new Regex("^Invoking SKFunction ([^.])*\\.([^ ]*) with context (.*)$").Match(message);
-                if (!match.Success) { return; }
-                lock (this._locker)
-                {
-                    this.openCalls[eventId] = (
-                        skillName: match.Groups[1].Value,
-                        functionName: match.Groups[2].Value,
-                        context: match.Groups[3].Value);
-                }
-            }
-            else if (message.StartsWith("Result: ", StringComparison.Ordinal))
-            {
-                lock (this._locker)
-                {
-                    if (!this.openCalls.TryGetValue(eventId, out var callInfo)) { return; }
-                    string result = message.Substring("Result: ".Length);
-                    this.log[callInfo] = result;
-                    this.openCalls.Remove(eventId);
-                }
-            }
-        }
-    }
-
     private static void LoadReplay(IKernel kernel, IReadOnlyDictionary<(string skillName, string functionName, string context), string> log)
     {
-        foreach (var logEntry in log.GroupBy(kvp => (kvp.Key.skillName, kvp.Key.functionName), kvp => (kvp.Key.context, result: kvp.Value)))
+        var replay = new SkillReplayer(Key, new Dictionary<string, IReadOnlyList<LoggedSkillInvocation>>
         {
-            ISKFunction fallback = kernel.Skills.GetFunction(logEntry.Key.skillName, logEntry.Key.functionName);
-
-            var loggedIOPairs = logEntry.ToDictionary(t => t.context, t => t.result);
-#pragma warning disable CA2000 // Dispose objects before losing scope
-            kernel.RegisterCustomFunction(logEntry.Key.skillName, new SKFunction(
-                SKFunction.DelegateTypes.ContextSwitchInSKContextOutTaskSKContext,
-                (Func<SKContext, Task<SKContext>>)(async (context) =>
-                {
-                    if (loggedIOPairs.TryGetValue(context.Variables.Input, out string? result))
-                    {
-                        context.Variables.Update(result);
-                        return context;
-                    }
-                    return await fallback.InvokeAsync(context);
-                }),
-                (fallback as SKFunction)?.Parameters ?? Array.Empty<ParameterView>(),
-                logEntry.Key.skillName,
-                logEntry.Key.functionName,
-                fallback.Description,
-                fallback.IsSemantic));
-#pragma warning restore CA2000 // Dispose objects before losing scope
-        }
+            [Key] = log.Select(e => new LoggedSkillInvocation($"{e.Key.skillName}.{e.Key.functionName}", e.Key.context, e.Value)).ToList()
+        });
+        replay.AttachTo(kernel);
     }
 }
